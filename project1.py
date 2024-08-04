@@ -1,10 +1,11 @@
 import os
 import shutil
 import fnmatch
+import argparse
 import re
 
 class FileManager:
-    """A utility class for efficient file management."""
+    # utility class for efficient file management
 
     def __init__(self, directory):
         self.directory = directory
@@ -19,7 +20,7 @@ class FileManager:
         return matches
 
     def rename_file(self, old_name, new_name):
-        """Renames a single file."""
+        #Renames a single file
         full_old_path = os.path.join(self.directory, old_name)
         full_new_path = os.path.join(self.directory, new_name)
         if os.path.isfile(full_old_path):
@@ -29,7 +30,7 @@ class FileManager:
             print(f"File not found: {old_name}")
 
     def modify_file_content(self, file_name, old_string, new_string):
-        """Modifies the content of a file."""
+        #modifies the content of a file
         full_path = os.path.join(self.directory, file_name)
         if os.path.isfile(full_path):
             with open(full_path, 'r') as file:
@@ -42,7 +43,7 @@ class FileManager:
             print(f"File not found: {file_name}")
 
     def copy_files(self, file_names, target_directory):
-        """Copies multiple files to a target directory."""
+        #Copies multiple files to a target directory
         if not os.path.exists(target_directory):
             print(f"Destination directory does not exist: {target_directory}")
             return
@@ -56,7 +57,7 @@ class FileManager:
                 print(f"File not found: {file_name}")
 
     def move_files(self, file_names, target_directory):
-        """Moves multiple files to a target directory."""
+        #Moves multiple files to a target directory
         if not os.path.exists(target_directory):
             print(f"Destination directory does not exist: {target_directory}")
             return
@@ -69,69 +70,53 @@ class FileManager:
             else:
                 print(f"File not found: {file_name}")
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Command-line tool for file management")
+    parser.add_argument('directory', help='Directory to operate in')
+    parser.add_argument('operation', choices=['search', 'rename', 'modify', 'copy', 'move'], help='Operation to perform')
+    parser.add_argument('--pattern', help='Pattern for searching files')
+    parser.add_argument('--oldname', help='Old name for renaming or modifying file')
+    parser.add_argument('--newname', help='New name for renaming file')
+    parser.add_argument('--oldstring', help='Old string to replace in file content')
+    parser.add_argument('--newstring', help='New string to replace in file content')
+    parser.add_argument('--files', nargs='+', help='List of files for copy/move operations')
+    parser.add_argument('--target', help='Target directory for copy/move operations')
+    return parser.parse_args()
+
 def main():
-    directory = input("Please enter the directory: ")
-    manager = FileManager(directory)
+    args = parse_arguments()
+    manager = FileManager(args.directory)
 
-    while True:
-        print("\nPlease enter your operation on file:")
-        print("S for Search")
-        print("R for Rename")
-        print("M for Modify")
-        print("C for copying files")
-        print("X for moving files")
-        print("F for finding the directory")
-        print("Q to Quit")
-        
-        operation = input("Enter your choice: ").upper()
-
-        if operation == 'S':
-            pattern = input("Please enter the pattern (e.g., *.txt): ")
-            matches = manager.search_files(pattern)
-            if matches:
-                print("Matching files:")
-                for match in matches:
-                    print(match)
-            else:
-                print("No matching files found.")
-                
-        elif operation == 'R':
-            old_name = input("Please enter the current file name: ")
-            new_name = input("Please enter the new file name: ")
-            manager.rename_file(old_name, new_name)
-
-        elif operation == 'M':
-            file_name = input("Please enter the file name to modify: ")
-            old_string = input("Please enter the string to replace: ")
-            new_string = input("Please enter the new string: ")
-            manager.modify_file_content(file_name, old_string, new_string)
-
-        elif operation == 'C':
-            files = input("Please enter the file names (separated by spaces): ").split()
-            target_directory = input("Please enter the target directory: ")
-            manager.copy_files(files, target_directory)
-
-        elif operation == 'X':
-            files = input("Please enter the file names (separated by spaces): ").split()
-            target_directory = input("Please enter the target directory: ")
-            manager.move_files(files, target_directory)
-
-        elif operation == 'F':
-            pattern = input("Please enter the pattern (e.g., *.txt): ")
-            matches = manager.search_files(pattern)
-            if matches:
-                print("Matching files:")
-                for match in matches:
-                    print(match)
-            else:
-                print("No matching files found.")
-
-        elif operation == 'Q':
-            print("Exiting the program.")
-            break
-
+    if args.operation == 'search':
+        matches = manager.search_files(args.pattern)
+        if matches:
+            print("Matching files:")
+            for match in matches:
+                print(match)
         else:
-            print("Invalid choice, please try again.")
+            print("No matching files found.")
+    elif args.operation == 'rename':
+        if args.oldname and args.newname:
+            manager.rename_file(args.oldname, args.newname)
+        else:
+            print("Error: --oldname and --newname are required for rename operation.")
+    elif args.operation == 'modify':
+        if args.oldname and args.oldstring and args.newstring:
+            manager.modify_file_content(args.oldname, args.oldstring, args.newstring)
+        else:
+            print("Error: --oldname, --oldstring, and --newstring are required for modify operation.")
+    elif args.operation == 'copy':
+        if args.files and args.target:
+            manager.copy_files(args.files, args.target)
+        else:
+            print("Error: --files and --target are required for copy operation.")
+    elif args.operation == 'move':
+        if args.files and args.target:
+            manager.move_files(args.files, args.target)
+        else:
+            print("Error: --files and --target are required for move operation.")
+    else:
+        print("Invalid operation selected.")
 
 if __name__ == "__main__":
     main()
